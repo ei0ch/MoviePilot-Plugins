@@ -25,7 +25,7 @@ class EmbyQbCleaner(_PluginBase):
     # 插件图标
     plugin_icon = "embyqbcleaner.png"
     # 插件版本
-    plugin_version = "1.2.3"
+    plugin_version = "1.2.4"
     # 插件作者
     plugin_author = "aech"
     # 作者主页
@@ -114,7 +114,8 @@ class EmbyQbCleaner(_PluginBase):
         libraries = []
         if self._emby:
             try:
-                libraries = self._emby.get_libraries()
+                # 使用 Emby 类的 get_library_list 方法获取媒体库列表
+                libraries = self._emby.get_library_list()
             except Exception as e:
                 logger.error(f"获取媒体库列表失败: {str(e)}")
 
@@ -200,12 +201,20 @@ class EmbyQbCleaner(_PluginBase):
                         'component': 'VRow',
                         'content': [
                             {
-                                'component': 'VAlert',
+                                'component': 'VCol',
                                 'props': {
-                                    'type': 'info',
-                                    'variant': 'tonal',
-                                    'text': '本插件需要在Emby端配置Webhook指向MoviePilot。当媒体播放完成时，将自动在qBittorrent中删除相应的种子。'
-                                }
+                                    'cols': 12,
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VAlert',
+                                        'props': {
+                                            'type': 'info',
+                                            'variant': 'tonal',
+                                            'text': '本插件需要在Emby端配置Webhook指向MoviePilot。当媒体播放完成时，将自动在qBittorrent中删除相应的种子。'
+                                        }
+                                    }
+                                ]
                             }
                         ]
                     }
