@@ -25,7 +25,7 @@ class EmbyQbCleaner(_PluginBase):
     # 插件图标
     plugin_icon = "embyqbcleaner.png"
     # 插件版本
-    plugin_version = "1.1.1"
+    plugin_version = "1.2.3"
     # 插件作者
     plugin_author = "aech"
     # 作者主页
@@ -42,14 +42,15 @@ class EmbyQbCleaner(_PluginBase):
     _delete_files = True
     _send_notification = True
     _target_library = ""
-    
-    # 媒体库对象
     _emby = None
     _jellyfin = None
     _plex = None
 
     def init_plugin(self, config: dict = None):
-        # 初始化媒体库对象
+        """
+        初始化插件
+        """
+        # 初始化媒体服务器客户端
         self._emby = Emby()
         self._jellyfin = Jellyfin()
         self._plex = Plex()
@@ -111,22 +112,11 @@ class EmbyQbCleaner(_PluginBase):
         """
         # 获取已配置的媒体库
         libraries = []
-        if settings.MEDIASERVER:
-            if "emby" in settings.MEDIASERVER:
-                try:
-                    libraries.extend(self._emby.get_libraries())
-                except Exception as e:
-                    logger.error(f"获取Emby媒体库列表失败: {str(e)}")
-            if "jellyfin" in settings.MEDIASERVER:
-                try:
-                    libraries.extend(self._jellyfin.get_libraries())
-                except Exception as e:
-                    logger.error(f"获取Jellyfin媒体库列表失败: {str(e)}")
-            if "plex" in settings.MEDIASERVER:
-                try:
-                    libraries.extend(self._plex.get_libraries())
-                except Exception as e:
-                    logger.error(f"获取Plex媒体库列表失败: {str(e)}")
+        if self._emby:
+            try:
+                libraries = self._emby.get_libraries()
+            except Exception as e:
+                logger.error(f"获取媒体库列表失败: {str(e)}")
 
         return [
             {
@@ -210,20 +200,12 @@ class EmbyQbCleaner(_PluginBase):
                         'component': 'VRow',
                         'content': [
                             {
-                                'component': 'VCol',
+                                'component': 'VAlert',
                                 'props': {
-                                    'cols': 12,
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VAlert',
-                                        'props': {
-                                            'type': 'info',
-                                            'variant': 'tonal',
-                                            'text': '本插件需要在媒体服务器端配置Webhook指向MoviePilot。当媒体播放完成时，将自动在qBittorrent中删除相应的种子。'
-                                        }
-                                    }
-                                ]
+                                    'type': 'info',
+                                    'variant': 'tonal',
+                                    'text': '本插件需要在Emby端配置Webhook指向MoviePilot。当媒体播放完成时，将自动在qBittorrent中删除相应的种子。'
+                                }
                             }
                         ]
                     }
@@ -536,5 +518,4 @@ class EmbyQbCleaner(_PluginBase):
                 # 处理媒体项
                 self.process_media_item(item_data)
             except Exception as e:
-                logger.error(f"处理Webhook事件出错: {str(e)}") 
                 logger.error(f"处理Webhook事件出错: {str(e)}") 
