@@ -37,7 +37,7 @@ class EmbyQbCleaner(_PluginBase):
     auth_level = 1
 
     # 私有属性
-    _enabled = True
+    _enabled = False
     _target_library = ""
     _delete_files = True
     _send_notification = True
