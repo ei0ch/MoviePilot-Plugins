@@ -1,0 +1,2 @@
+qbittorrentapi~=2022.8.35
+requests>=2.28.0 

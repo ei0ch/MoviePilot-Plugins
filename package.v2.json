@@ -1,0 +1,9 @@
+{
+    "EmbyQbCleaner": {
+        "name": "Emby播放清理",
+        "description": "监听Emby媒体播放事件，自动清理对应的qBittorrent种子。",
+        "version": "1.0.1",
+        "icon": "embyqbcleaner.png",
+        "color": "#0097a7",
+        "level": 1,
+        "author": "aech",

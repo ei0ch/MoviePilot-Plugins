@@ -1,0 +1,13 @@
+enabled: false
+emby_host: ""
+emby_api_key: ""
+emby_username: ""
+emby_password: ""
+qb_host: ""
+qb_username: ""
+qb_password: ""
+telegram_token: ""
+telegram_chat_id: ""
+target_library: ""
+delete_files: true
+send_notification: true 
