@@ -12,8 +12,6 @@ from app.core.event import eventmanager, Event
 from app.log import logger
 from app.plugins import _PluginBase
 from app.schemas.types import NotificationType, EventType
-from app.modules.emby import Emby
-from app.helper.downloader import DownloaderHelper
 
 
 class EmbyQbCleaner(_PluginBase):
@@ -24,7 +22,7 @@ class EmbyQbCleaner(_PluginBase):
     # 插件图标
     plugin_icon = "embyqbcleaner.png"
     # 插件版本
-    plugin_version = "1.0.4"
+    plugin_version = "1.0.8"
     # 插件作者
     plugin_author = "aech"
     # 作者主页
@@ -37,23 +35,32 @@ class EmbyQbCleaner(_PluginBase):
     auth_level = 1
 
     # 私有属性
-    _enabled = True
+    _enabled = true
+    _emby_host = ""
+    _emby_api_key = ""
+    _emby_username = ""
+    _emby_password = ""
+    _qb_host = ""
+    _qb_username = ""
+    _qb_password = ""
+    _telegram_token = ""
+    _telegram_chat_id = ""
     _target_library = ""
     _delete_files = True
     _send_notification = True
-    
-    # 媒体服务器和下载器对象
-    emby = None
-    downloader = None
 
     def init_plugin(self, config: dict = None):
-        # 直接初始化系统组件，不需要检查
-        self.emby = Emby()
-        self.downloader = DownloaderHelper()
-        
-        # 处理插件自身配置
         if config:
             self._enabled = config.get("enabled", False)
+            self._emby_host = config.get("emby_host", "")
+            self._emby_api_key = config.get("emby_api_key", "")
+            self._emby_username = config.get("emby_username", "")
+            self._emby_password = config.get("emby_password", "")
+            self._qb_host = config.get("qb_host", "")
+            self._qb_username = config.get("qb_username", "")
+            self._qb_password = config.get("qb_password", "")
+            self._telegram_token = config.get("telegram_token", "")
+            self._telegram_chat_id = config.get("telegram_chat_id", "")
             self._target_library = config.get("target_library", "")
             self._delete_files = config.get("delete_files", True)
             self._send_notification = config.get("send_notification", True)
@@ -170,7 +177,144 @@ class EmbyQbCleaner(_PluginBase):
                             {
                                 'component': 'VCol',
                                 'props': {
-                                    'cols': 12
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'emby_host',
+                                            'label': 'Emby服务器地址',
+                                            'placeholder': 'http://localhost:8096'
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'emby_api_key',
+                                            'label': 'Emby API密钥',
+                                            'placeholder': '在Emby管理后台获取'
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VRow',
+                        'content': [
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'emby_username',
+                                            'label': 'Emby用户名',
+                                            'placeholder': 'Emby登录用户名'
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'emby_password',
+                                            'label': 'Emby密码',
+                                            'placeholder': 'Emby登录密码',
+                                            'type': 'password'
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VRow',
+                        'content': [
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'qb_host',
+                                            'label': 'qBittorrent地址',
+                                            'placeholder': 'http://localhost:8080'
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'qb_username',
+                                            'label': 'qBittorrent用户名',
+                                            'placeholder': 'qBittorrent登录用户名'
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VRow',
+                        'content': [
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'qb_password',
+                                            'label': 'qBittorrent密码',
+                                            'placeholder': 'qBittorrent登录密码',
+                                            'type': 'password'
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
                                 },
                                 'content': [
                                     {
@@ -178,7 +322,68 @@ class EmbyQbCleaner(_PluginBase):
                                         'props': {
                                             'model': 'target_library',
                                             'label': '目标媒体库',
-                                            'placeholder': '输入需要监控的媒体库名称'
+                                            'placeholder': '要监控的Emby媒体库ID'
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VRow',
+                        'content': [
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'telegram_token',
+                                            'label': 'Telegram Bot Token',
+                                            'placeholder': 'Telegram机器人Token'
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'telegram_chat_id',
+                                            'label': 'Telegram Chat ID',
+                                            'placeholder': 'Telegram聊天ID'
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VRow',
+                        'content': [
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VAlert',
+                                        'props': {
+                                            'type': 'info',
+                                            'variant': 'tonal',
+                                            'text': '本插件需要在Emby端配置Webhook指向MoviePilot。当媒体播放完成时，将自动在qBittorrent中删除相应的种子。'
+                                                    '如需使用Telegram通知，请填写相应的Bot Token和Chat ID。'
                                         }
                                     }
                                 ]
@@ -189,6 +394,15 @@ class EmbyQbCleaner(_PluginBase):
             }
         ], {
             "enabled": False,
+            "emby_host": "http://localhost:8096",
+            "emby_api_key": "",
+            "emby_username": "",
+            "emby_password": "",
+            "qb_host": "http://localhost:8080",
+            "qb_username": "admin",
+            "qb_password": "adminadmin",
+            "telegram_token": "",
+            "telegram_chat_id": "",
             "target_library": "",
             "delete_files": True,
             "send_notification": True
@@ -241,43 +455,55 @@ class EmbyQbCleaner(_PluginBase):
 
     # 获取Emby API令牌
     def get_emby_token(self):
-        """获取Emby API令牌"""
-        # 首先尝试系统Emby
-        if self.emby:
-            try:
-                token = self.emby.get_token()
-                if token:
-                    return token
-            except Exception as e:
-                logger.warning(f"使用系统Emby配置失败: {str(e)}")
-        
-        # 回退到自定义配置
         if self._emby_api_key:
             return self._emby_api_key
+            
+        url = f"{self._emby_host}/emby/Users/AuthenticateByName"
+        headers = {
+            "Content-Type": "application/json",
+            "X-Emby-Authorization": "MediaBrowser Client=EmbyCleanup, Device=Server, DeviceId=1, Version=1.0.0"
+        }
+        data = {
+            "Username": self._emby_username,
+            "Pw": self._emby_password
+        }
         
-        # 其他尝试...
+        try:
+            response = requests.post(url, headers=headers, json=data)
+            response.raise_for_status()
+            return response.json().get("AccessToken")
+        except Exception as e:
+            logger.error(f"获取Emby令牌失败: {str(e)}")
+            return None
+
+    # 获取封面图片
+    def get_cover_image(self, item_id):
+        token = self.get_emby_token()
+        if not token:
+            return None
+        
+        url = f"{self._emby_host}/emby/Items/{item_id}/Images/Primary?api_key={token}"
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                return response.content
+            return None
+        except Exception as e:
+            logger.error(f"获取封面图片失败: {str(e)}")
+            return None
 
     # 连接到qBittorrent
     def get_qb_client(self):
-        """
-        使用系统设置的下载器配置获取客户端
-        """
-        if not self.downloader:
-            return None
-        
         try:
-            # 获取默认下载器
-            downloader_dict = self.downloader.get_downloader_conf()
-            for downloader_id, downloader_info in downloader_dict.items():
-                if downloader_info.get("type") == "qbittorrent":
-                    client = self.downloader.get_client(downloader_id)
-                    if client:
-                        return client
-            
-            logger.warning("未找到配置的qBittorrent下载器")
-            return None
+            qb = qbittorrentapi.Client(
+                host=self._qb_host,
+                username=self._qb_username,
+                password=self._qb_password
+            )
+            qb.auth_log_in()
+            return qb
         except Exception as e:
-            logger.error(f"获取qBittorrent客户端失败: {e}")
+            logger.error(f"连接qBittorrent失败: {e}")
             return None
 
     # 根据媒体文件路径查找并删除种子
@@ -356,17 +582,17 @@ class EmbyQbCleaner(_PluginBase):
 
     # 发送Telegram消息
     def send_telegram_notification(self, message, image_data=None):
-        if not self._send_notification:
-            logger.warning("Telegram通知已禁用，跳过通知")
+        if not self._telegram_token or not self._telegram_chat_id or not self._send_notification:
+            logger.warning("Telegram配置缺失或通知已禁用，跳过通知")
             return False
         
         try:
             logger.info("准备发送Telegram消息")
             if image_data:
                 logger.info("发送带图片的消息")
-                url = f"https://api.telegram.org/bot{self.get_emby_token()}/sendPhoto"
+                url = f"https://api.telegram.org/bot{self._telegram_token}/sendPhoto"
                 data = {
-                    "chat_id": self.get_emby_token(),
+                    "chat_id": self._telegram_chat_id,
                     "caption": message,
                     "parse_mode": "HTML"
                 }
@@ -377,9 +603,9 @@ class EmbyQbCleaner(_PluginBase):
                 response = requests.post(url, data=data, files=files)
             else:
                 logger.info("发送纯文本消息")
-                url = f"https://api.telegram.org/bot{self.get_emby_token()}/sendMessage"
+                url = f"https://api.telegram.org/bot{self._telegram_token}/sendMessage"
                 data = {
-                    "chat_id": self.get_emby_token(),
+                    "chat_id": self._telegram_chat_id,
                     "text": message,
                     "parse_mode": "HTML"
                 }
@@ -415,8 +641,8 @@ class EmbyQbCleaner(_PluginBase):
                 logger.info(f"忽略非目标媒体库的媒体: {item_name}")
                 return
             
-            # 获取封面图片URL
-            image_url = self.get_cover_image_url(item_id)
+            # 获取封面图片
+            image_data = self.get_cover_image(item_id)
             
             # 删除种子
             success, result = self.delete_torrent_by_file(file_path)
@@ -440,16 +666,13 @@ class EmbyQbCleaner(_PluginBase):
             
             # 发送通知
             if self._send_notification:
-                try:
-                    # 使用 MoviePilot 的通知系统
-                    self.post_message(
-                        mtype=NotificationType.Plugin,
-                        title="媒体清理通知",
-                        text=notification.replace('<b>', '').replace('</b>', ''),
-                        image=image_url  # 使用图片URL而不是二进制数据
-                    )
-                except Exception as e:
-                    logger.error(f"发送通知失败: {str(e)}")
+                # 使用 MoviePilot 的通知系统
+                self.post_message(
+                    mtype=NotificationType.Plugin,
+                    title="媒体清理通知",
+                    text=notification.replace('<b>', '').replace('</b>', ''),
+                    image=image_data
+                )
             
             logger.info("媒体项处理完成")
             logger.info("="*50)
@@ -492,19 +715,3 @@ class EmbyQbCleaner(_PluginBase):
                 self.process_media_item(item_data)
             except Exception as e:
                 logger.error(f"处理Webhook事件出错: {str(e)}") 
-
-    def get_cover_image_url(self, item_id):
-        """
-        获取封面图片URL
-        """
-        if not self.emby or not item_id:
-            return None
-        try:
-            return self.emby.get_image_url(item_id, "Primary")
-        except Exception as e:
-            logger.error(f"获取封面图片URL失败: {str(e)}")
-            return None
-
-    def refresh_library(self):
-        if "emby" in settings.MEDIASERVER:
-            self.emby.refresh_library_by_items(items) 
