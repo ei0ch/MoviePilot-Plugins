@@ -1,2 +1,0 @@
-qbittorrent-api>=2024.11.70
-requests>=2.32.3
