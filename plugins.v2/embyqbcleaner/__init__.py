@@ -114,6 +114,35 @@ class EmbyQbCleaner(_PluginBase):
         """
         拼装插件配置页面
         """
+        # 获取已配置的媒体库
+        media_libraries = []
+        try:
+            if self._emby:
+                emby_libs = self._emby.get_libraries()
+                if emby_libs:
+                    media_libraries.extend([{
+                        "title": f"Emby - {lib.get('name')}",
+                        "value": lib.get('id')
+                    } for lib in emby_libs])
+            
+            if self._jellyfin:
+                jellyfin_libs = self._jellyfin.get_libraries()
+                if jellyfin_libs:
+                    media_libraries.extend([{
+                        "title": f"Jellyfin - {lib.get('name')}",
+                        "value": lib.get('id')
+                    } for lib in jellyfin_libs])
+            
+            if self._plex:
+                plex_libs = self._plex.get_libraries()
+                if plex_libs:
+                    media_libraries.extend([{
+                        "title": f"Plex - {lib.get('name')}",
+                        "value": lib.get('id')
+                    } for lib in plex_libs])
+        except Exception as e:
+            logger.error(f"获取媒体库列表失败: {str(e)}")
+
         return [
             {
                 'component': 'VForm',
@@ -178,151 +207,14 @@ class EmbyQbCleaner(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 6
                                 },
                                 'content': [
                                     {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'emby_host',
-                                            'label': 'Emby服务器地址',
-                                            'placeholder': 'http://localhost:8096'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 6
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'emby_api_key',
-                                            'label': 'Emby API密钥',
-                                            'placeholder': '在Emby管理后台获取'
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 6
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'emby_username',
-                                            'label': 'Emby用户名',
-                                            'placeholder': 'Emby登录用户名'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 6
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'emby_password',
-                                            'label': 'Emby密码',
-                                            'placeholder': 'Emby登录密码',
-                                            'type': 'password'
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 6
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'qb_host',
-                                            'label': 'qBittorrent地址',
-                                            'placeholder': 'http://localhost:8080'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 6
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'qb_username',
-                                            'label': 'qBittorrent用户名',
-                                            'placeholder': 'qBittorrent登录用户名'
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 6
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'qb_password',
-                                            'label': 'qBittorrent密码',
-                                            'placeholder': 'qBittorrent登录密码',
-                                            'type': 'password'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 6
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
+                                        'component': 'VSelect',
                                         'props': {
                                             'model': 'target_library',
                                             'label': '目标媒体库',
-                                            'placeholder': '要监控的Emby媒体库ID'
+                                            'items': media_libraries if media_libraries else [{"title": "未检测到媒体库", "value": ""}]
                                         }
                                     }
                                 ]
@@ -336,45 +228,6 @@ class EmbyQbCleaner(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 6
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'telegram_token',
-                                            'label': 'Telegram Bot Token',
-                                            'placeholder': 'Telegram机器人Token'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 6
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'telegram_chat_id',
-                                            'label': 'Telegram Chat ID',
-                                            'placeholder': 'Telegram聊天ID'
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12
                                 },
                                 'content': [
                                     {
@@ -383,7 +236,6 @@ class EmbyQbCleaner(_PluginBase):
                                             'type': 'info',
                                             'variant': 'tonal',
                                             'text': '本插件需要在Emby端配置Webhook指向MoviePilot。当媒体播放完成时，将自动在qBittorrent中删除相应的种子。'
-                                                    '如需使用Telegram通知，请填写相应的Bot Token和Chat ID。'
                                         }
                                     }
                                 ]
@@ -394,18 +246,9 @@ class EmbyQbCleaner(_PluginBase):
             }
         ], {
             "enabled": False,
-            "emby_host": "http://localhost:8096",
-            "emby_api_key": "",
-            "emby_username": "",
-            "emby_password": "",
-            "qb_host": "http://localhost:8080",
-            "qb_username": "admin",
-            "qb_password": "adminadmin",
-            "telegram_token": "",
-            "telegram_chat_id": "",
-            "target_library": "",
             "delete_files": True,
-            "send_notification": True
+            "send_notification": True,
+            "target_library": ""
         }
 
     def get_page(self) -> List[dict]:
@@ -708,4 +551,5 @@ class EmbyQbCleaner(_PluginBase):
                 # 处理媒体项
                 self.process_media_item(item_data)
             except Exception as e:
+                logger.error(f"处理Webhook事件出错: {str(e)}") 
                 logger.error(f"处理Webhook事件出错: {str(e)}") 
