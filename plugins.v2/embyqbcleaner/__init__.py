@@ -3,7 +3,7 @@ import json
 import time
 import logging
 import requests
-import qbittorrent_api as qbittorrentapi
+import qbittorrentapi
 from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
 
