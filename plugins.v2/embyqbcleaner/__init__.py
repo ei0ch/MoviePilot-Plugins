@@ -186,7 +186,126 @@ class EmbyQbCleaner(_PluginBase):
                                         'props': {
                                             'model': 'emby_host',
                                             'label': 'Emby服务器地址',
-                                            'placeholder': 'http://emby.yourdomain.com:8096'
+                                            'placeholder': 'http://localhost:8096'
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'emby_api_key',
+                                            'label': 'Emby API密钥',
+                                            'placeholder': '在Emby管理后台获取'
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VRow',
+                        'content': [
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'emby_username',
+                                            'label': 'Emby用户名',
+                                            'placeholder': 'Emby登录用户名'
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'emby_password',
+                                            'label': 'Emby密码',
+                                            'placeholder': 'Emby登录密码',
+                                            'type': 'password'
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VRow',
+                        'content': [
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'qb_host',
+                                            'label': 'qBittorrent地址',
+                                            'placeholder': 'http://localhost:8080'
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'qb_username',
+                                            'label': 'qBittorrent用户名',
+                                            'placeholder': 'qBittorrent登录用户名'
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VRow',
+                        'content': [
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'qb_password',
+                                            'label': 'qBittorrent密码',
+                                            'placeholder': 'qBittorrent登录密码',
+                                            'type': 'password'
                                         }
                                     }
                                 ]
@@ -203,120 +322,7 @@ class EmbyQbCleaner(_PluginBase):
                                         'props': {
                                             'model': 'target_library',
                                             'label': '目标媒体库',
-                                            'placeholder': '输入需要监控的媒体库名称'
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 4
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'emby_api_key',
-                                            'label': 'Emby API Key',
-                                            'placeholder': '(可选)',
-                                            'type': 'password'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 4
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'emby_username',
-                                            'label': 'Emby 用户名',
-                                            'placeholder': '不填则使用API Key'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 4
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'emby_password',
-                                            'label': 'Emby 密码',
-                                            'placeholder': '不填则使用API Key',
-                                            'type': 'password'
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 4
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'qb_host',
-                                            'label': 'qBittorrent 地址',
-                                            'placeholder': 'http://qbittorrent.yourdomain.com:8080'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 4
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'qb_username',
-                                            'label': 'qBittorrent 用户名'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 4
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'qb_password',
-                                            'label': 'qBittorrent 密码',
-                                            'type': 'password'
+                                            'placeholder': '要监控的Emby媒体库ID'
                                         }
                                     }
                                 ]
@@ -338,8 +344,7 @@ class EmbyQbCleaner(_PluginBase):
                                         'props': {
                                             'model': 'telegram_token',
                                             'label': 'Telegram Bot Token',
-                                            'placeholder': '(可选)',
-                                            'type': 'password'
+                                            'placeholder': 'Telegram机器人Token'
                                         }
                                     }
                                 ]
@@ -356,7 +361,7 @@ class EmbyQbCleaner(_PluginBase):
                                         'props': {
                                             'model': 'telegram_chat_id',
                                             'label': 'Telegram Chat ID',
-                                            'placeholder': '(可选)'
+                                            'placeholder': 'Telegram聊天ID'
                                         }
                                     }
                                 ]
@@ -389,16 +394,16 @@ class EmbyQbCleaner(_PluginBase):
             }
         ], {
             "enabled": False,
-            "emby_host": "http://10.10.10.10:5186",
+            "emby_host": "http://localhost:8096",
             "emby_api_key": "",
-            "emby_username": "aech",
+            "emby_username": "",
             "emby_password": "",
-            "qb_host": "http://10.10.10.10:5812",
-            "qb_username": "aech",
-            "qb_password": "",
+            "qb_host": "http://localhost:8080",
+            "qb_username": "admin",
+            "qb_password": "adminadmin",
             "telegram_token": "",
             "telegram_chat_id": "",
-            "target_library": "9kg",
+            "target_library": "",
             "delete_files": True,
             "send_notification": True
         }
@@ -408,6 +413,18 @@ class EmbyQbCleaner(_PluginBase):
         拼装插件详情页面
         """
         return []
+
+    def get_state(self) -> bool:
+        """
+        获取插件状态
+        """
+        return self._enabled
+
+    def stop_service(self):
+        """
+        退出插件
+        """
+        pass
 
     # 检查媒体项是否属于指定的媒体库
     def is_in_target_library(self, item_data):
