@@ -41,23 +41,20 @@ class EmbyQbCleaner(_PluginBase):
     _target_library = ""
     _delete_files = True
     _send_notification = True
-    _use_system_emby = False
-    _emby_host = ""
-    _emby_api_key = ""
     
     # 媒体服务器和下载器对象
     emby = None
     downloader = None
 
     def init_plugin(self, config: dict = None):
-        # 尝试初始化系统组件
-        try:
+        # 初始化系统组件
+        if "emby" in settings.MEDIASERVER:
             self.emby = Emby()
-            self._use_system_emby = True
-        except Exception as e:
-            logger.warning(f"初始化系统 Emby 失败: {str(e)}")
-            self._use_system_emby = False
-            self.emby = None
+        else:
+            logger.error("Emby服务器配置不完整！")
+            return
+            
+        self.downloader = DownloaderHelper()
         
         # 处理插件自身配置
         if config:
@@ -65,8 +62,6 @@ class EmbyQbCleaner(_PluginBase):
             self._target_library = config.get("target_library", "")
             self._delete_files = config.get("delete_files", True)
             self._send_notification = config.get("send_notification", True)
-            self._emby_host = config.get("emby_host", "")
-            self._emby_api_key = config.get("emby_api_key", "")
 
     def get_command(self) -> List[Dict[str, Any]]:
         """
@@ -117,6 +112,32 @@ class EmbyQbCleaner(_PluginBase):
         """
         拼装插件配置页面
         """
+        # 检查是否配置了Emby
+        if "emby" not in settings.MEDIASERVER:
+            return [{
+                'component': 'VForm',
+                'content': [{
+                    'component': 'VRow',
+                    'content': [{
+                        'component': 'VCol',
+                        'props': {
+                            'cols': 12
+                        },
+                        'content': [{
+                            'component': 'VAlert',
+                            'props': {
+                                'type': 'error',
+                                'variant': 'tonal',
+                                'text': '请先在MoviePilot中配置Emby服务器！'
+                            }
+                        }]
+                    }]
+                }]
+            }], {
+                "enabled": False
+            }
+
+        # 正常配置表单
         return [
             {
                 'component': 'VForm',
@@ -215,67 +236,6 @@ class EmbyQbCleaner(_PluginBase):
                                 ]
                             }
                         ]
-                    },
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VAlert',
-                                        'props': {
-                                            'type': 'info',
-                                            'variant': 'tonal',
-                                            'text': '系统 Emby 配置不完整，请在下方手动配置 Emby 服务器'
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 6
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'emby_host',
-                                            'label': 'Emby服务器地址',
-                                            'placeholder': 'http://emby.yourdomain.com:8096'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 6
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'emby_api_key',
-                                            'label': 'Emby API Key',
-                                            'placeholder': '(可选)',
-                                            'type': 'password'
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
                     }
                 ]
             }
@@ -283,9 +243,7 @@ class EmbyQbCleaner(_PluginBase):
             "enabled": False,
             "target_library": "",
             "delete_files": True,
-            "send_notification": True,
-            "emby_host": "",
-            "emby_api_key": ""
+            "send_notification": True
         }
 
     def get_page(self) -> List[dict]:
@@ -335,19 +293,21 @@ class EmbyQbCleaner(_PluginBase):
 
     # 获取Emby API令牌
     def get_emby_token(self):
-        # 优先使用系统Emby
-        if self._use_system_emby and self.emby:
+        """获取Emby API令牌"""
+        # 首先尝试系统Emby
+        if self.emby:
             try:
-                return self.emby.get_token()
+                token = self.emby.get_token()
+                if token:
+                    return token
             except Exception as e:
-                logger.warning(f"使用系统Emby获取Token失败: {str(e)}")
+                logger.warning(f"使用系统Emby配置失败: {str(e)}")
         
         # 回退到自定义配置
         if self._emby_api_key:
             return self._emby_api_key
         
-        # 使用用户名密码获取
-        # ...
+        # 其他尝试...
 
     # 连接到qBittorrent
     def get_qb_client(self):
