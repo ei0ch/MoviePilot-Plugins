@@ -44,14 +44,14 @@ class EmbyQbCleaner(_PluginBase):
     
     # 媒体服务器和下载器对象
     emby = None
-    downloader_helper = None
+    downloader = None
 
     def init_plugin(self, config: dict = None):
-        # 先初始化媒体服务器和下载器对象，不管插件是否启用
+        # 初始化系统组件
         self.emby = Emby()
-        self.downloader_helper = DownloaderHelper()
+        self.downloader = DownloaderHelper()
         
-        # 再读取配置
+        # 处理插件自身配置
         if config:
             self._enabled = config.get("enabled", False)
             self._target_library = config.get("target_library", "")
@@ -283,15 +283,15 @@ class EmbyQbCleaner(_PluginBase):
         """
         使用系统设置的下载器配置获取客户端
         """
-        if not self.downloader_helper:
+        if not self.downloader:
             return None
         
         try:
             # 获取默认下载器
-            downloader_dict = self.downloader_helper.get_downloader_conf()
+            downloader_dict = self.downloader.get_downloader_conf()
             for downloader_id, downloader_info in downloader_dict.items():
                 if downloader_info.get("type") == "qbittorrent":
-                    client = self.downloader_helper.get_client(downloader_id)
+                    client = self.downloader.get_client(downloader_id)
                     if client:
                         return client
             
@@ -524,4 +524,8 @@ class EmbyQbCleaner(_PluginBase):
             return self.emby.get_image_url(item_id, "Primary")
         except Exception as e:
             logger.error(f"获取封面图片URL失败: {str(e)}")
-            return None 
+            return None
+
+    def refresh_library(self):
+        if "emby" in settings.MEDIASERVER:
+            self.emby.refresh_library_by_items(items) 
