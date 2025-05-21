@@ -47,16 +47,16 @@ class EmbyQbCleaner(_PluginBase):
     downloader_helper = None
 
     def init_plugin(self, config: dict = None):
+        # 先初始化媒体服务器和下载器对象，不管插件是否启用
+        self.emby = Emby()
+        self.downloader_helper = DownloaderHelper()
+        
+        # 再读取配置
         if config:
-            self._enabled = config.get("enabled")
+            self._enabled = config.get("enabled", False)
             self._target_library = config.get("target_library", "")
             self._delete_files = config.get("delete_files", True)
             self._send_notification = config.get("send_notification", True)
-            
-            # 只有在插件启用时才初始化系统组件
-            if self._enabled:
-                self.emby = Emby()
-                self.downloader_helper = DownloaderHelper()
 
     def get_command(self) -> List[Dict[str, Any]]:
         """
