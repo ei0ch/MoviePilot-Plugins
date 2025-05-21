@@ -335,7 +335,6 @@ class EmbyQbCleaner(_PluginBase):
 
     # 获取Emby API令牌
     def get_emby_token(self):
-        """获取Emby API令牌"""
         # 优先使用系统Emby
         if self._use_system_emby and self.emby:
             try:
@@ -347,7 +346,8 @@ class EmbyQbCleaner(_PluginBase):
         if self._emby_api_key:
             return self._emby_api_key
         
-        # 其他尝试...
+        # 使用用户名密码获取
+        # ...
 
     # 连接到qBittorrent
     def get_qb_client(self):
