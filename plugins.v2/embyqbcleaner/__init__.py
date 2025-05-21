@@ -22,7 +22,7 @@ class EmbyQbCleaner(_PluginBase):
     # 插件图标
     plugin_icon = "embyqbcleaner.png"
     # 插件版本
-    plugin_version = "1.0.8"
+    plugin_version = "1.0.9"
     # 插件作者
     plugin_author = "aech"
     # 作者主页
@@ -35,7 +35,7 @@ class EmbyQbCleaner(_PluginBase):
     auth_level = 1
 
     # 私有属性
-    _enabled = true
+    _enabled = False
     _emby_host = ""
     _emby_api_key = ""
     _emby_username = ""
@@ -476,22 +476,6 @@ class EmbyQbCleaner(_PluginBase):
             logger.error(f"获取Emby令牌失败: {str(e)}")
             return None
 
-    # 获取封面图片
-    def get_cover_image(self, item_id):
-        token = self.get_emby_token()
-        if not token:
-            return None
-        
-        url = f"{self._emby_host}/emby/Items/{item_id}/Images/Primary?api_key={token}"
-        try:
-            response = requests.get(url)
-            if response.status_code == 200:
-                return response.content
-            return None
-        except Exception as e:
-            logger.error(f"获取封面图片失败: {str(e)}")
-            return None
-
     # 连接到qBittorrent
     def get_qb_client(self):
         try:
@@ -641,8 +625,15 @@ class EmbyQbCleaner(_PluginBase):
                 logger.info(f"忽略非目标媒体库的媒体: {item_name}")
                 return
             
-            # 获取封面图片
-            image_data = self.get_cover_image(item_id)
+            # 获取封面图片URL
+            image_url = None
+            try:
+                # 使用 Emby API 获取图片URL
+                token = self.get_emby_token()
+                if token:
+                    image_url = f"{self._emby_host}/emby/Items/{item_id}/Images/Primary?api_key={token}"
+            except Exception as e:
+                logger.error(f"获取封面图片URL失败: {str(e)}")
             
             # 删除种子
             success, result = self.delete_torrent_by_file(file_path)
@@ -666,13 +657,16 @@ class EmbyQbCleaner(_PluginBase):
             
             # 发送通知
             if self._send_notification:
-                # 使用 MoviePilot 的通知系统
-                self.post_message(
-                    mtype=NotificationType.Plugin,
-                    title="媒体清理通知",
-                    text=notification.replace('<b>', '').replace('</b>', ''),
-                    image=image_data
-                )
+                try:
+                    # 使用 MoviePilot 的通知系统
+                    self.post_message(
+                        mtype=NotificationType.Plugin,
+                        title="媒体清理通知",
+                        text=notification.replace('<b>', '').replace('</b>', ''),
+                        image=image_url  # 使用图片URL而不是二进制数据
+                    )
+                except Exception as e:
+                    logger.error(f"发送通知失败: {str(e)}")
             
             logger.info("媒体项处理完成")
             logger.info("="*50)
