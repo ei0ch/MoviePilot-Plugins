@@ -47,13 +47,8 @@ class EmbyQbCleaner(_PluginBase):
     downloader = None
 
     def init_plugin(self, config: dict = None):
-        # 初始化系统组件
-        if "emby" in settings.MEDIASERVER:
-            self.emby = Emby()
-        else:
-            logger.error("Emby服务器配置不完整！")
-            return
-            
+        # 直接初始化系统组件，不需要检查
+        self.emby = Emby()
         self.downloader = DownloaderHelper()
         
         # 处理插件自身配置
@@ -112,32 +107,6 @@ class EmbyQbCleaner(_PluginBase):
         """
         拼装插件配置页面
         """
-        # 检查是否配置了Emby
-        if "emby" not in settings.MEDIASERVER:
-            return [{
-                'component': 'VForm',
-                'content': [{
-                    'component': 'VRow',
-                    'content': [{
-                        'component': 'VCol',
-                        'props': {
-                            'cols': 12
-                        },
-                        'content': [{
-                            'component': 'VAlert',
-                            'props': {
-                                'type': 'error',
-                                'variant': 'tonal',
-                                'text': '请先在MoviePilot中配置Emby服务器！'
-                            }
-                        }]
-                    }]
-                }]
-            }], {
-                "enabled": False
-            }
-
-        # 正常配置表单
         return [
             {
                 'component': 'VForm',
