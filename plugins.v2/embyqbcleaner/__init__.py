@@ -48,12 +48,12 @@ class EmbyQbCleaner(_PluginBase):
 
     def init_plugin(self, config: dict = None):
         if config:
-            self._enabled = config.get("enabled", False)
+            self._enabled = config.get("enabled")
             self._target_library = config.get("target_library", "")
             self._delete_files = config.get("delete_files", True)
             self._send_notification = config.get("send_notification", True)
             
-            # 初始化媒体服务器和下载器
+            # 只有在插件启用时才初始化系统组件
             if self._enabled:
                 self.emby = Emby()
                 self.downloader_helper = DownloaderHelper()
@@ -262,12 +262,21 @@ class EmbyQbCleaner(_PluginBase):
 
     # 获取Emby API令牌
     def get_emby_token(self):
-        """
-        使用系统设置的Emby配置获取Token
-        """
-        if not self.emby:
-            return None
-        return self.emby.get_token()
+        """获取Emby API令牌"""
+        # 首先尝试系统Emby
+        if self.emby:
+            try:
+                token = self.emby.get_token()
+                if token:
+                    return token
+            except Exception as e:
+                logger.warning(f"使用系统Emby配置失败: {str(e)}")
+        
+        # 回退到自定义配置
+        if self._emby_api_key:
+            return self._emby_api_key
+        
+        # 其他尝试...
 
     # 连接到qBittorrent
     def get_qb_client(self):
