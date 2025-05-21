@@ -730,8 +730,7 @@ class EmbyQbCleaner(_PluginBase):
                         "Name": event_data.item_name,
                         "Path": event_data.item_path,
                         "Id": event_data.item_id,
-                        "Type": event_data.media_type,
-                        "LibraryName": event_data.library_name
+                        "Type": event_data.media_type
                     }
                 }
                 
