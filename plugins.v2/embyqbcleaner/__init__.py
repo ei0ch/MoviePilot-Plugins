@@ -12,6 +12,8 @@ from app.core.event import eventmanager, Event
 from app.log import logger
 from app.plugins import _PluginBase
 from app.schemas.types import NotificationType, EventType
+from app.modules.emby import Emby
+from app.helper.downloader import DownloaderHelper
 
 
 class EmbyQbCleaner(_PluginBase):
@@ -22,7 +24,7 @@ class EmbyQbCleaner(_PluginBase):
     # 插件图标
     plugin_icon = "embyqbcleaner.png"
     # 插件版本
-    plugin_version = "1.0.0"
+    plugin_version = "1.0.3"
     # 插件作者
     plugin_author = "aech"
     # 作者主页
@@ -36,34 +38,25 @@ class EmbyQbCleaner(_PluginBase):
 
     # 私有属性
     _enabled = False
-    _emby_host = ""
-    _emby_api_key = ""
-    _emby_username = ""
-    _emby_password = ""
-    _qb_host = ""
-    _qb_username = ""
-    _qb_password = ""
-    _telegram_token = ""
-    _telegram_chat_id = ""
     _target_library = ""
     _delete_files = True
     _send_notification = True
+    
+    # 媒体服务器和下载器对象
+    emby = None
+    downloader_helper = None
 
     def init_plugin(self, config: dict = None):
         if config:
             self._enabled = config.get("enabled", False)
-            self._emby_host = config.get("emby_host", "")
-            self._emby_api_key = config.get("emby_api_key", "")
-            self._emby_username = config.get("emby_username", "")
-            self._emby_password = config.get("emby_password", "")
-            self._qb_host = config.get("qb_host", "")
-            self._qb_username = config.get("qb_username", "")
-            self._qb_password = config.get("qb_password", "")
-            self._telegram_token = config.get("telegram_token", "")
-            self._telegram_chat_id = config.get("telegram_chat_id", "")
             self._target_library = config.get("target_library", "")
             self._delete_files = config.get("delete_files", True)
             self._send_notification = config.get("send_notification", True)
+            
+            # 初始化媒体服务器和下载器
+            if self._enabled:
+                self.emby = Emby()
+                self.downloader_helper = DownloaderHelper()
 
     def get_command(self) -> List[Dict[str, Any]]:
         """
@@ -114,35 +107,6 @@ class EmbyQbCleaner(_PluginBase):
         """
         拼装插件配置页面
         """
-        # 获取已配置的媒体库
-        media_libraries = []
-        try:
-            if self._emby:
-                emby_libs = self._emby.get_libraries()
-                if emby_libs:
-                    media_libraries.extend([{
-                        "title": f"Emby - {lib.get('name')}",
-                        "value": lib.get('id')
-                    } for lib in emby_libs])
-            
-            if self._jellyfin:
-                jellyfin_libs = self._jellyfin.get_libraries()
-                if jellyfin_libs:
-                    media_libraries.extend([{
-                        "title": f"Jellyfin - {lib.get('name')}",
-                        "value": lib.get('id')
-                    } for lib in jellyfin_libs])
-            
-            if self._plex:
-                plex_libs = self._plex.get_libraries()
-                if plex_libs:
-                    media_libraries.extend([{
-                        "title": f"Plex - {lib.get('name')}",
-                        "value": lib.get('id')
-                    } for lib in plex_libs])
-        except Exception as e:
-            logger.error(f"获取媒体库列表失败: {str(e)}")
-
         return [
             {
                 'component': 'VForm',
@@ -206,15 +170,15 @@ class EmbyQbCleaner(_PluginBase):
                             {
                                 'component': 'VCol',
                                 'props': {
-                                    'cols': 12,
+                                    'cols': 12
                                 },
                                 'content': [
                                     {
-                                        'component': 'VSelect',
+                                        'component': 'VTextField',
                                         'props': {
                                             'model': 'target_library',
                                             'label': '目标媒体库',
-                                            'items': media_libraries if media_libraries else [{"title": "未检测到媒体库", "value": ""}]
+                                            'placeholder': '输入需要监控的媒体库名称'
                                         }
                                     }
                                 ]
@@ -227,7 +191,7 @@ class EmbyQbCleaner(_PluginBase):
                             {
                                 'component': 'VCol',
                                 'props': {
-                                    'cols': 12,
+                                    'cols': 12
                                 },
                                 'content': [
                                     {
@@ -235,7 +199,7 @@ class EmbyQbCleaner(_PluginBase):
                                         'props': {
                                             'type': 'info',
                                             'variant': 'tonal',
-                                            'text': '本插件需要在Emby端配置Webhook指向MoviePilot。当媒体播放完成时，将自动在qBittorrent中删除相应的种子。'
+                                            'text': '本插件需要配置Emby Webhook指向MoviePilot。当媒体播放完成时，将自动在qBittorrent中删除相应的种子。'
                                         }
                                     }
                                 ]
@@ -246,9 +210,9 @@ class EmbyQbCleaner(_PluginBase):
             }
         ], {
             "enabled": False,
+            "target_library": "",
             "delete_files": True,
-            "send_notification": True,
-            "target_library": ""
+            "send_notification": True
         }
 
     def get_page(self) -> List[dict]:
@@ -298,39 +262,34 @@ class EmbyQbCleaner(_PluginBase):
 
     # 获取Emby API令牌
     def get_emby_token(self):
-        if self._emby_api_key:
-            return self._emby_api_key
-            
-        url = f"{self._emby_host}/emby/Users/AuthenticateByName"
-        headers = {
-            "Content-Type": "application/json",
-            "X-Emby-Authorization": "MediaBrowser Client=EmbyCleanup, Device=Server, DeviceId=1, Version=1.0.0"
-        }
-        data = {
-            "Username": self._emby_username,
-            "Pw": self._emby_password
-        }
-        
-        try:
-            response = requests.post(url, headers=headers, json=data)
-            response.raise_for_status()
-            return response.json().get("AccessToken")
-        except Exception as e:
-            logger.error(f"获取Emby令牌失败: {str(e)}")
+        """
+        使用系统设置的Emby配置获取Token
+        """
+        if not self.emby:
             return None
+        return self.emby.get_token()
 
     # 连接到qBittorrent
     def get_qb_client(self):
+        """
+        使用系统设置的下载器配置获取客户端
+        """
+        if not self.downloader_helper:
+            return None
+        
         try:
-            qb = qbittorrentapi.Client(
-                host=self._qb_host,
-                username=self._qb_username,
-                password=self._qb_password
-            )
-            qb.auth_log_in()
-            return qb
+            # 获取默认下载器
+            downloader_dict = self.downloader_helper.get_downloader_conf()
+            for downloader_id, downloader_info in downloader_dict.items():
+                if downloader_info.get("type") == "qbittorrent":
+                    client = self.downloader_helper.get_client(downloader_id)
+                    if client:
+                        return client
+            
+            logger.warning("未找到配置的qBittorrent下载器")
+            return None
         except Exception as e:
-            logger.error(f"连接qBittorrent失败: {e}")
+            logger.error(f"获取qBittorrent客户端失败: {e}")
             return None
 
     # 根据媒体文件路径查找并删除种子
@@ -409,17 +368,17 @@ class EmbyQbCleaner(_PluginBase):
 
     # 发送Telegram消息
     def send_telegram_notification(self, message, image_data=None):
-        if not self._telegram_token or not self._telegram_chat_id or not self._send_notification:
-            logger.warning("Telegram配置缺失或通知已禁用，跳过通知")
+        if not self._send_notification:
+            logger.warning("Telegram通知已禁用，跳过通知")
             return False
         
         try:
             logger.info("准备发送Telegram消息")
             if image_data:
                 logger.info("发送带图片的消息")
-                url = f"https://api.telegram.org/bot{self._telegram_token}/sendPhoto"
+                url = f"https://api.telegram.org/bot{self.get_emby_token()}/sendPhoto"
                 data = {
-                    "chat_id": self._telegram_chat_id,
+                    "chat_id": self.get_emby_token(),
                     "caption": message,
                     "parse_mode": "HTML"
                 }
@@ -430,9 +389,9 @@ class EmbyQbCleaner(_PluginBase):
                 response = requests.post(url, data=data, files=files)
             else:
                 logger.info("发送纯文本消息")
-                url = f"https://api.telegram.org/bot{self._telegram_token}/sendMessage"
+                url = f"https://api.telegram.org/bot{self.get_emby_token()}/sendMessage"
                 data = {
-                    "chat_id": self._telegram_chat_id,
+                    "chat_id": self.get_emby_token(),
                     "text": message,
                     "parse_mode": "HTML"
                 }
@@ -469,14 +428,7 @@ class EmbyQbCleaner(_PluginBase):
                 return
             
             # 获取封面图片URL
-            image_url = None
-            try:
-                # 使用 Emby API 获取图片URL
-                token = self.get_emby_token()
-                if token:
-                    image_url = f"{self._emby_host}/emby/Items/{item_id}/Images/Primary?api_key={token}"
-            except Exception as e:
-                logger.error(f"获取封面图片URL失败: {str(e)}")
+            image_url = self.get_cover_image_url(item_id)
             
             # 删除种子
             success, result = self.delete_torrent_by_file(file_path)
@@ -552,4 +504,15 @@ class EmbyQbCleaner(_PluginBase):
                 self.process_media_item(item_data)
             except Exception as e:
                 logger.error(f"处理Webhook事件出错: {str(e)}") 
-                logger.error(f"处理Webhook事件出错: {str(e)}") 
+
+    def get_cover_image_url(self, item_id):
+        """
+        获取封面图片URL
+        """
+        if not self.emby or not item_id:
+            return None
+        try:
+            return self.emby.get_image_url(item_id, "Primary")
+        except Exception as e:
+            logger.error(f"获取封面图片URL失败: {str(e)}")
+            return None 
