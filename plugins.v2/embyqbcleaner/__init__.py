@@ -37,7 +37,7 @@ class EmbyQbCleaner(_PluginBase):
     auth_level = 1
 
     # 私有属性
-    _enabled = False
+    _enabled = True
     _target_library = ""
     _delete_files = True
     _send_notification = True
@@ -179,27 +179,6 @@ class EmbyQbCleaner(_PluginBase):
                                             'model': 'target_library',
                                             'label': '目标媒体库',
                                             'placeholder': '输入需要监控的媒体库名称'
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VAlert',
-                                        'props': {
-                                            'type': 'info',
-                                            'variant': 'tonal',
-                                            'text': '本插件需要配置Emby Webhook指向MoviePilot。当媒体播放完成时，将自动在qBittorrent中删除相应的种子。'
                                         }
                                     }
                                 ]
