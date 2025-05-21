@@ -516,7 +516,6 @@ class EmbyQbCleaner(_PluginBase):
         
         try:
             # 获取所有种子
-            logger.info("获取所有种子信息")
             torrents = qb.torrents_info()
             logger.info(f"当前共有 {len(torrents)} 个种子")
             
@@ -525,8 +524,6 @@ class EmbyQbCleaner(_PluginBase):
             logger.info(f"查找包含文件的种子: {filename}")
             
             for torrent in torrents:
-                logger.debug(f"检查种子: {torrent.name}")
-                
                 # 先检查种子名称是否匹配
                 if filename.lower() in torrent.name.lower():
                     logger.info(f"找到匹配的种子: {torrent.name}")
@@ -539,11 +536,9 @@ class EmbyQbCleaner(_PluginBase):
                         "tracker": torrent.tracker,
                         "tags": torrent.tags.split(', ') if torrent.tags else []
                     }
-                    logger.info(f"种子详细信息: {json.dumps(torrent_info, ensure_ascii=False)}")
                     
                     try:
                         # 删除种子及其数据
-                        logger.info(f"开始删除种子: {torrent.name}")
                         qb.torrents_delete(delete_files=self._delete_files, hashes=torrent.hash)
                         logger.info(f"成功删除种子: {torrent.name}")
                         return True, torrent_info
@@ -556,9 +551,6 @@ class EmbyQbCleaner(_PluginBase):
                     torrent_files = qb.torrents_files(torrent.hash)
                     for torrent_file in torrent_files:
                         torrent_filename = os.path.basename(torrent_file.name)
-                        logger.debug(f"检查文件: {torrent_filename}")
-                        
-                        # 比较文件名（不区分大小写）
                         if filename.lower() == torrent_filename.lower():
                             logger.info(f"找到完全匹配的种子: {torrent.name}")
                             
@@ -570,11 +562,9 @@ class EmbyQbCleaner(_PluginBase):
                                 "tracker": torrent.tracker,
                                 "tags": torrent.tags.split(', ') if torrent.tags else []
                             }
-                            logger.info(f"种子详细信息: {json.dumps(torrent_info, ensure_ascii=False)}")
                             
                             try:
                                 # 删除种子及其数据
-                                logger.info(f"开始删除种子: {torrent.name}")
                                 qb.torrents_delete(delete_files=self._delete_files, hashes=torrent.hash)
                                 logger.info(f"成功删除种子: {torrent.name}")
                                 return True, torrent_info
@@ -582,7 +572,6 @@ class EmbyQbCleaner(_PluginBase):
                                 logger.error(f"删除种子时出错: {str(e)}")
                                 return False, f"删除种子失败: {str(e)}"
                 except Exception as e:
-                    logger.warning(f"获取种子文件列表失败: {str(e)}")
                     continue
             
             logger.warning(f"未找到匹配的种子: {filename}")
@@ -635,7 +624,6 @@ class EmbyQbCleaner(_PluginBase):
         try:
             logger.info("="*50)
             logger.info("开始处理新的媒体项")
-            logger.info(f"收到的数据: {json.dumps(item_data, ensure_ascii=False)}")
             
             item = item_data.get("Item", {})
             item_name = item.get("Name", "未知")
@@ -643,29 +631,21 @@ class EmbyQbCleaner(_PluginBase):
             file_path = item.get("Path", "")
             item_id = item.get("Id", "")
             
-            logger.info(f"媒体信息 - 名称: {item_name}, 类型: {item_type}, 路径: {file_path}, ID: {item_id}")
-            
             if not file_path:
                 logger.warning("数据中没有文件路径，跳过处理")
                 return
             
             # 检查是否是目标库的媒体
             is_target = self.is_in_target_library(item_data) or self._target_library.lower() in file_path.lower()
-            logger.info(f"目标库检查结果: {'是' if is_target else '否'}")
-            
             if not is_target:
                 logger.info(f"忽略非目标媒体库的媒体: {item_name}")
                 return
             
             # 获取封面图片
-            logger.info("开始获取封面图片")
             image_data = self.get_cover_image(item_id)
-            logger.info(f"封面图片获取结果: {'成功' if image_data else '失败'}")
             
             # 删除种子
-            logger.info("开始删除种子")
             success, result = self.delete_torrent_by_file(file_path)
-            logger.info(f"种子删除结果: {'成功' if success else '失败'}")
             
             # 准备通知消息
             notification = f"✅ <b>媒体清理</b>\n\n"
@@ -686,15 +666,12 @@ class EmbyQbCleaner(_PluginBase):
             
             # 发送通知
             if self._send_notification:
-                logger.info("开始发送Telegram通知")
-                notification_result = self.send_telegram_notification(notification, image_data)
-                logger.info(f"Telegram通知发送结果: {'成功' if notification_result else '失败'}")
-            
-                # 同时发送MoviePilot内部通知
+                # 使用 MoviePilot 的通知系统
                 self.post_message(
-                    mtype=NotificationType.Manual,
+                    mtype=NotificationType.Plugin,
                     title="媒体清理通知",
-                    text=notification.replace('<b>', '').replace('</b>', '')
+                    text=notification.replace('<b>', '').replace('</b>', ''),
+                    image=image_data
                 )
             
             logger.info("媒体项处理完成")
